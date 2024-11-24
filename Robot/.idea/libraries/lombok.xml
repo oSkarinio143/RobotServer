@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="lombok">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/../../../Inne/Biblioteki/Lombok/lombok.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../../../Inne/Biblioteki/Lombok/lombok.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
