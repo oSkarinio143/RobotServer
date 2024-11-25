@@ -1,18 +1,18 @@
-package connection.channel.clientWithoutBlocking;
+package connection.channel;
 
 import lombok.Getter;
 import modules.User;
-import service.operate.InvestorMenager;
-import service.operate.OperationMenager;
-import service.operate.SellerMenager;
-import service.operate.UniwersalMenager;
+import service.operate.*;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.Channel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 @Getter
@@ -27,20 +27,32 @@ public class ServerClientHandler {
     private static final int MAX_RANGE_BUY_OPERATION = 6;
     private static final int MIN_RANGE_OTHER_OPERATION = 1;
     private static final int MAX_RANGE_OTHER_OPERATION = 4;
-    private User user = User.getInstance();
+    private static List<User> nickList = new ArrayList<>();
+    private User user;
     private SocketChannel clientChannel;
-    private SelectionKey key;
     private Selector selector;
+    private SelectionKey key;
+    private SelectionKey previousKey;
     private int isChannelOpen = 1;
 
     public ServerClientHandler(SocketChannel clientChannel) {
         this.clientChannel = clientChannel;
     }
 
-    public void handleClient(SelectionKey key, Selector selector) throws IOException {
+    public void handleClient(SelectionKey previousKey, SelectionKey key, Selector selector) throws IOException {
         this.selector = selector;
         this.key = key;
+        this.previousKey = previousKey;
+        configureUser();
         choiceTypeOperation();
+    }
+
+    public void getSameUser(){
+
+    }
+
+    public void addUserToList(){
+        String keyString = key.channel().toString();
     }
 
     public void sendMessage(String messageToClient) throws IOException {
@@ -60,19 +72,17 @@ public class ServerClientHandler {
     private String receiveResponse() throws IOException {
         ByteBuffer buffer = ByteBuffer.allocate(256);
 
-        while (true) { // Pętla czekająca na dane od konkretnego klienta
+        while (true) {
         selector.select();
-
-        // Przechodzimy przez gotowe klucze
         Set<SelectionKey> temporaryKeys = selector.selectedKeys();
 
         for (SelectionKey readyKey : temporaryKeys) {
-            if (readyKey == this.key && readyKey.isReadable()) { // Obsługujemy tylko właściwego klienta
+            if (readyKey == this.key && readyKey.isReadable()) {
                 isConnectionOpen(buffer);
 
                 buffer.flip();
                 key.interestOps(SelectionKey.OP_WRITE);
-                temporaryKeys.remove(key); // Usuwamy klucze, żeby selector nie zapętlał ich obsługi
+                temporaryKeys.remove(key);
                 return new String(buffer.array(), 0, buffer.limit());
             }
         }
@@ -106,17 +116,16 @@ public class ServerClientHandler {
             clientChannel.close();
         }
     }
-
     public void choiceTypeOperation() throws IOException {
         OperationMenager.displayOperations();
         int choiceUser = receiveCorrectResponseRange(MIN_RANGE_TYPE_OPERATION, MAX_RANGE_TYPE_OPERATION);
         System.out.println("Wybor operacji: "+choiceUser);
         switch (choiceUser) {
             case 1:
-                investorOperationChoice();
+                doInvestorOperationIfPossible();
                 break;
             case 2:
-                sellerOperationChoice();
+                doSellerOperationIfPossible();
                 break;
             case 3:
                 buyOperationChoice();
@@ -129,6 +138,18 @@ public class ServerClientHandler {
         }
     }
 
+    public void doInvestorOperationIfPossible() throws IOException {
+        if(isOperationPossible(InvestorMenager.returnIdsList())) {
+            investorOperationChoice();
+        }
+    }
+
+    public void doSellerOperationIfPossible() throws IOException {
+        if(isOperationPossible(SellerMenager.returnIdsList())){
+            sellerOperationChoice();
+        }
+    }
+
     public void investorOperationChoice() throws IOException {
         OperationMenager.displayInvestorOperations();
         int userChoice;
@@ -136,31 +157,23 @@ public class ServerClientHandler {
         System.out.println("Wybor inwestora operacji: "+investorOperationChoice);
         switch (investorOperationChoice) {
             case 1:
-                if(isOperationPossible(InvestorMenager.returnIdsList())) {
-                    userChoice = receiveCorrectResponseList(InvestorMenager.returnIdsList());
-                    OperationMenager.showInvestor(userChoice);
-                }
+                userChoice = receiveCorrectResponseList(InvestorMenager.returnIdsList());
+                OperationMenager.showInvestor(userChoice);
                 break;
             case 2:
-                if(isOperationPossible(InvestorMenager.returnIdsList())) {
-                    userChoice = receiveCorrectResponseRange(0, (int) user.getGold());
-                    OperationMenager.investGold(userChoice);
-                    operationRealizated();
-                }
+                userChoice = receiveCorrectResponseRange(0, (int) user.getGold());
+                OperationMenager.investGold(userChoice);
+                operationRealizated();
                 break;
             case 3:
-                if(isOperationPossible(InvestorMenager.returnIdsList())) {
-                    userChoice = receiveCorrectResponseList(InvestorMenager.returnIdsList());
-                    OperationMenager.upgradeInvestor(userChoice);
-                    operationRealizated();
-                }
+                userChoice = receiveCorrectResponseList(InvestorMenager.returnIdsList());
+                OperationMenager.upgradeInvestor(userChoice);
+                operationRealizated();
                 break;
             case 4:
-                if(isOperationPossible(InvestorMenager.returnIdsList())) {
-                    userChoice = receiveCorrectResponseList(InvestorMenager.returnIdsList());
-                    OperationMenager.sellInvestor(userChoice);
-                    operationRealizated();
-                }
+                userChoice = receiveCorrectResponseList(InvestorMenager.returnIdsList());
+                OperationMenager.sellInvestor(userChoice);
+                operationRealizated();
                 break;
             default:
                 throw new RuntimeException("Bad number");
@@ -174,31 +187,22 @@ public class ServerClientHandler {
         System.out.println("Wybor sellera operacji: "+sellerOperationChoice);
         switch (sellerOperationChoice) {
             case 1:
-                if(isOperationPossible(SellerMenager.returnIdsList())) {
-                    userChoice = receiveCorrectResponseList(SellerMenager.returnIdsList());
-                    OperationMenager.showSeller(userChoice);
-                }
+                userChoice = receiveCorrectResponseList(SellerMenager.returnIdsList());
+                OperationMenager.showSeller(userChoice);
                 break;
             case 2:
-                if(isOperationPossible(SellerMenager.returnIdsList())) {
-                    userChoice = receiveCorrectResponseRange(0, (int) user.getGold());
-                    OperationMenager.investGold(userChoice);
-                    operationRealizated();
-                }
+                OperationMenager.earnGold();
+                operationRealizated();
                 break;
             case 3:
-                if(isOperationPossible(SellerMenager.returnIdsList())) {
-                    userChoice = receiveCorrectResponseList(SellerMenager.returnIdsList());
-                    OperationMenager.upgradeSeller(userChoice);
-                    operationRealizated();
-                }
+                userChoice = receiveCorrectResponseList(SellerMenager.returnIdsList());
+                OperationMenager.upgradeSeller(userChoice);
+                operationRealizated();
                 break;
             case 4:
-                if(isOperationPossible(SellerMenager.returnIdsList())) {
-                    userChoice = receiveCorrectResponseList(SellerMenager.returnIdsList());
-                    OperationMenager.sellSeller(userChoice);
-                    operationRealizated();
-                }
+                userChoice = receiveCorrectResponseList(SellerMenager.returnIdsList());
+                OperationMenager.sellSeller(userChoice);
+                operationRealizated();
                 break;
             default:
                 throw new RuntimeException("Bad number");
@@ -282,5 +286,47 @@ public class ServerClientHandler {
 
     public void operationRealizated(){
         System.out.println("Operacja zostala zrealizowana pomyslnie");
+    }
+
+    private void configureUser() throws IOException {
+        String lastNick="";
+        String nick="";
+        if(ifNewUser()){
+            nick = getNick();
+            if(ifNewNick(nick))
+                getNewUser(nick);
+            else
+                getExistUser(nick);
+        }else
+            getExistUser(lastNick);
+        lastNick = nick;
+    }
+
+    public void getNewUser(String nick){
+        UserMenager.createNewUser(nick);
+        user = UserMenager.getUser();
+        nickList.add(user);
+    }
+
+    public void getExistUser(String nick){
+        for (User userNick : nickList) {
+            System.out.println("wartosc w liscie"+userNick);
+            if(nick.equals(userNick.toString())){
+                user = userNick;
+            }
+        }
+    }
+
+    public String getNick() throws IOException{
+        sendMessage("Podaj nick uzytkownika: ");
+        return receiveResponse();
+    }
+
+    private boolean ifNewUser(){
+        return !previousKey.equals(key);
+    }
+
+    private boolean ifNewNick(String nick){
+        return !nickList.toString().contains(nick);
     }
 }

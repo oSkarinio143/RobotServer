@@ -6,12 +6,13 @@ import modules.interfaces.Robot;
 import modules.interfaces.RobotInvestor;
 import modules.interfaces.RobotSeller;
 import service.operate.OperationMenager;
+import service.operate.UserMenager;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class Machine {
-    private User user = User.getInstance();
+    private User user = UserMenager.getUser();
     private List<Investor> investorsList = new ArrayList<>();
     private List<AbstractSeller> sellerList = new ArrayList<>();
     @Getter

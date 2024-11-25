@@ -13,7 +13,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class SellerMenager {
-    private static User user = User.getInstance();
+    private static User user = UserMenager.getUser();
     private static List<AbstractSeller> ownedSellers = user.getOwnedSellers();
 
     public static Optional<AbstractSeller> findSellerById(int idSeller){

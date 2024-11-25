@@ -1,4 +1,4 @@
-package connection.channel.clientBlocking;
+package connection.channel;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;

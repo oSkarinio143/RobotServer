@@ -3,7 +3,7 @@ package service.operate;
 import modules.User;
 
 public class MachineMenager {
-    private static User user = User.getInstance();
+    private static User user = UserMenager.getUser();
 
     public static void unlockMachine(){
         user.unlockMachine();

@@ -16,7 +16,7 @@ import java.util.Map;
 import static service.Generator.*;
 
 public class InvestorMenager {
-    private static User user = User.getInstance();
+    private static User user = UserMenager.getUser();
     private static List<Investor> ownedInvestors = user.getOwnedInvestors();
 
     public static Investor findInvestorById(int idInv){

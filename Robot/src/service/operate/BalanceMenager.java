@@ -8,7 +8,7 @@ import modules.User;
 @Getter
 @Setter
 public class BalanceMenager {
-    private static User user = User.getInstance();
+    private static User user = UserMenager.getUser();
 
     public static double returnGoldAmount(){
         return user.getGold();

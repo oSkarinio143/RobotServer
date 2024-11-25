@@ -14,19 +14,20 @@ import java.util.List;
 @Getter
 @Setter
 public class User {
-    private static User instance;
+    //private static User instance;
     private double gold=100000;
+    private String nick;
     private Machine machine;
     private List<Investor> ownedInvestors = new ArrayList<>();
     private List<AbstractSeller> ownedSellers = new ArrayList<>();
 
-    private User(){}
+    public User(String nick){
+        this.nick=nick;
+    }
 
-    public static synchronized User getInstance(){
-        if (instance==null){
-            instance = new User();
-        }
-        return instance;
+    @Override
+    public String toString() {
+        return this.nick;
     }
 
     public Investor giveIdInvestor(Investor investor){

@@ -65,7 +65,7 @@ public class OperationMenager {
     }
 
     public static void checkGold(){
-        User user = User.getInstance();
+        User user = UserMenager.getUser();
         System.out.println("Gold: "+user.getGold());
     }
 

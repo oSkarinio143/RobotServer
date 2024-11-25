@@ -4,6 +4,7 @@ import modules.User;
 import modules.robot.AbstractSeller;
 import modules.robot.Investor;
 import service.operate.InvestorMenager;
+import service.operate.UserMenager;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -38,12 +39,12 @@ public class Sorting {
     }
 
     public static void sortListInvestor (){
-        User user = User.getInstance();
+        User user = UserMenager.getUser();
         Collections.sort(user.getOwnedInvestors());
     }
 
     public static void sortListSeller (){
-        User user = User.getInstance();
+        User user = UserMenager.getUser();
         user.getOwnedSellers().sort((a, b) -> Integer.compare(a.getSellerId(), b.getSellerId()));
     }
 

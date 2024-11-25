@@ -1,23 +1,33 @@
-package connection.channel.clientWithoutBlocking;
+package connection.channel;
 
-import connection.channel.clientBlocking.ServerClientHandler;
+import lombok.Getter;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
-import java.nio.channels.ServerSocketChannel;
-import java.nio.channels.SocketChannel;
-import java.util.Iterator;
-import java.util.Optional;
-import java.util.Set;
+import java.nio.channels.*;
+import java.util.*;
 
 public class Server {
     private static final String SERVER_ADDRESS = "192.168.1.15";
-    private static final int PORT = 5003;
+    private static final int PORT = 5002;
     private static ServerSocketChannel serverChannel;
     private static Selector selector;
+    private static SelectionKey previousKey;
 
+    private static void initialChannelOperations() throws IOException {
+        serverChannel = ServerSocketChannel.open();
+        serverChannel.bind(new InetSocketAddress(SERVER_ADDRESS, PORT));
+        serverChannel.configureBlocking(false);
+
+        selector = Selector.open();
+        serverChannel.register(selector, SelectionKey.OP_ACCEPT);
+    }
+
+    private static Iterator<SelectionKey> initialSelectorOperations() throws IOException {
+        selector.select();
+        Set<SelectionKey> selectedKeys = selector.selectedKeys();
+        return selectedKeys.iterator();
+    }
 
     public static void startServer() {
         try {
@@ -32,36 +42,18 @@ public class Server {
         }
     }
 
-    private static void initialChannelOperations() throws IOException {
-        serverChannel = ServerSocketChannel.open();
-        serverChannel.bind(new InetSocketAddress(SERVER_ADDRESS, PORT));
-        serverChannel.configureBlocking(false);
-
-        selector = Selector.open();
-        serverChannel.register(selector, SelectionKey.OP_ACCEPT);
-
-    }
-
-    private static Iterator<SelectionKey> initialSelectorOperations() throws IOException {
-        selector.select();
-        Set<SelectionKey> selectedKeys = selector.selectedKeys();
-        return selectedKeys.iterator();
-    }
-
     private static void divideConnection(Iterator<SelectionKey> iter) throws IOException {
-        SelectionKey lastKey=null;
         while (iter.hasNext()) {
             iter = initialSelectorOperations();
-            SelectionKey key = iter.next();
+            iter.next();
+            SelectionKey key = returnKeyInOrder();
             if (key.isAcceptable()) {
                 connectionAccept(key);
                 iter.remove();
             }else {
-                displayCommunicate(lastKey, key);
                 passClientHandler(key);
             }
-            lastKey = key;
-            System.out.println(key.channel());
+            previousKey = key;
         }
     }
 
@@ -74,33 +66,22 @@ public class Server {
 
     private static void passClientHandler(SelectionKey key) throws IOException {
         SocketChannel clientChannel = (SocketChannel) key.channel();
-        connection.channel.clientBlocking.ServerClientHandler clientHandler = new ServerClientHandler(clientChannel);
-        clientHandler.handleClient(key, selector);
+        ServerClientHandler clientHandler = new ServerClientHandler(clientChannel);
+        clientHandler.handleClient(previousKey, key, selector);
 
         if(clientHandler.getIsChannelOpen()==0){
-            //clientHandler.sendMessage("Koniec komunikacji");
             clientChannel.close();
         }
     }
 
-    private static void displayCommunicate(SelectionKey lastKey, SelectionKey actualKey){
-        if(!isNewClient(lastKey, actualKey)){
-            System.out.println("\nKomunikacja z nowym Clientem :-)");
-        }else{
-            System.out.println("\nWykonaj kolejna operacje :-)");
+    public static SelectionKey returnKeyInOrder() throws IOException {
+        selector.select();
+        Set<SelectionKey> selectedKeys = selector.selectedKeys();
+        for (SelectionKey selectedKey : selectedKeys) {
+            if(!selectedKey.isAcceptable()){
+                return selectedKey;
+            }
         }
-    }
-
-    private static boolean isNewClient(SelectionKey lastKey, SelectionKey actualKey){
-        boolean isLastKeyNull = Optional.ofNullable(lastKey).isEmpty();
-        if(isLastKeyNull) {
-            return false;
-        }
-        if(lastKey.equals(actualKey)){
-            return true;
-        }
-        else{
-            return false;
-        }
+        return selectedKeys.stream().findFirst().get();
     }
 }
