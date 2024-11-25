@@ -111,10 +111,10 @@ public class ServerClientHandler {
         System.out.println("Wybor operacji: "+choiceUser);
         switch (choiceUser) {
             case 1:
-                investorOperationChoice();
+                doInvestorOperationIfPossible();
                 break;
             case 2:
-                sellerOperationChoice();
+                doSellerOperationIfPossible();
                 break;
             case 3:
                 buyOperationChoice();
@@ -127,6 +127,18 @@ public class ServerClientHandler {
         }
     }
 
+    public void doInvestorOperationIfPossible() throws IOException {
+        if(isOperationPossible(InvestorMenager.returnIdsList())) {
+            investorOperationChoice();
+        }
+    }
+
+    public void doSellerOperationIfPossible() throws IOException {
+        if(isOperationPossible(SellerMenager.returnIdsList())){
+            sellerOperationChoice();
+        }
+    }
+
     public void investorOperationChoice() throws IOException {
         OperationMenager.displayInvestorOperations();
         int userChoice;
@@ -134,31 +146,23 @@ public class ServerClientHandler {
         System.out.println("Wybor inwestora operacji: "+investorOperationChoice);
         switch (investorOperationChoice) {
             case 1:
-                if(isOperationPossible(InvestorMenager.returnIdsList())) {
-                    userChoice = receiveCorrectResponseList(InvestorMenager.returnIdsList());
-                    OperationMenager.showInvestor(userChoice);
-                }
+                userChoice = receiveCorrectResponseList(InvestorMenager.returnIdsList());
+                OperationMenager.showInvestor(userChoice);
                 break;
             case 2:
-                if(isOperationPossible(InvestorMenager.returnIdsList())) {
-                    userChoice = receiveCorrectResponseRange(0, (int) user.getGold());
-                    OperationMenager.investGold(userChoice);
-                    operationRealizated();
-                }
+                userChoice = receiveCorrectResponseRange(0, (int) user.getGold());
+                OperationMenager.investGold(userChoice);
+                operationRealizated();
                 break;
             case 3:
-                if(isOperationPossible(InvestorMenager.returnIdsList())) {
-                    userChoice = receiveCorrectResponseList(InvestorMenager.returnIdsList());
-                    OperationMenager.upgradeInvestor(userChoice);
-                    operationRealizated();
-                }
+                userChoice = receiveCorrectResponseList(InvestorMenager.returnIdsList());
+                OperationMenager.upgradeInvestor(userChoice);
+                operationRealizated();
                 break;
             case 4:
-                if(isOperationPossible(InvestorMenager.returnIdsList())) {
-                    userChoice = receiveCorrectResponseList(InvestorMenager.returnIdsList());
-                    OperationMenager.sellInvestor(userChoice);
-                    operationRealizated();
-                }
+                userChoice = receiveCorrectResponseList(InvestorMenager.returnIdsList());
+                OperationMenager.sellInvestor(userChoice);
+                operationRealizated();
                 break;
             default:
                 throw new RuntimeException("Bad number");
@@ -172,30 +176,22 @@ public class ServerClientHandler {
         System.out.println("Wybor sellera operacji: "+sellerOperationChoice);
         switch (sellerOperationChoice) {
             case 1:
-                if(isOperationPossible(SellerMenager.returnIdsList())) {
-                    userChoice = receiveCorrectResponseList(SellerMenager.returnIdsList());
-                    OperationMenager.showSeller(userChoice);
-                }
+                userChoice = receiveCorrectResponseList(SellerMenager.returnIdsList());
+                OperationMenager.showSeller(userChoice);
                 break;
             case 2:
-                if(isOperationPossible(SellerMenager.returnIdsList())) {
-                    OperationMenager.earnGold();
-                    operationRealizated();
-                }
+                OperationMenager.earnGold();
+                operationRealizated();
                 break;
             case 3:
-                if(isOperationPossible(SellerMenager.returnIdsList())) {
-                    userChoice = receiveCorrectResponseList(SellerMenager.returnIdsList());
-                    OperationMenager.upgradeSeller(userChoice);
-                    operationRealizated();
-                }
+                userChoice = receiveCorrectResponseList(SellerMenager.returnIdsList());
+                OperationMenager.upgradeSeller(userChoice);
+                operationRealizated();
                 break;
             case 4:
-                if(isOperationPossible(SellerMenager.returnIdsList())) {
-                    userChoice = receiveCorrectResponseList(SellerMenager.returnIdsList());
-                    OperationMenager.sellSeller(userChoice);
-                    operationRealizated();
-                }
+                userChoice = receiveCorrectResponseList(SellerMenager.returnIdsList());
+                OperationMenager.sellSeller(userChoice);
+                operationRealizated();
                 break;
             default:
                 throw new RuntimeException("Bad number");

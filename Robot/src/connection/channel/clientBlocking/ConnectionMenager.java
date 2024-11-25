@@ -8,6 +8,8 @@ public class ConnectionMenager {
 
     public static void runConnection(){
         startServer();
+        startClient();
+        startClient();
     }
 
     public static void startServer(){
