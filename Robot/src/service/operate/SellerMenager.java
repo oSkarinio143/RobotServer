@@ -177,7 +177,7 @@ public class SellerMenager {
                 revoltChance += seller.revolt();
             }
         }
-        return Generator.checkingRevolt((int) revoltChance*10);
+        return Generator.checkingRevolt((int) revoltChance*200);
     }
 
     public static boolean isAutodestruction(){
@@ -187,7 +187,8 @@ public class SellerMenager {
                 autodestructionChance += seller.revolt();
             }
         }
-        return Generator.checkingRevolt((int) autodestructionChance*10);
+        System.out.println(autodestructionChance);
+        return Generator.checkingRevolt((int) autodestructionChance*200);
     }
 
     public static void performWork(){

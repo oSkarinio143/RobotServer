@@ -47,8 +47,16 @@ public class Client {
     }
 
     private void connectionHandle() throws IOException {
-        System.out.println(receiveMessage());
-        sendMessage();
+        String receivedMessage = receiveMessage();
+        String[] parts = receivedMessage.split("\\|", 2);
+        if(parts.length>=2) {
+            String message = parts[1];
+            String type = parts[0];
+            System.out.println(message);
+            if(type.equals("WITH_REPLY")) {
+                sendMessage();
+            }
+        }
     }
 
     public String receiveMessage() throws IOException {
@@ -57,6 +65,7 @@ public class Client {
         isConnectionOpen(buffer);
 
         buffer.flip();
+
         return new String(buffer.array(), 0, buffer.limit());
     }
 

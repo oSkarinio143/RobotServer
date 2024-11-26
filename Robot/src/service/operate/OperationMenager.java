@@ -82,17 +82,22 @@ public class OperationMenager {
         System.out.println("----------------------------------------");
     }
 
-    public static void investGold(int goldAmount) {
+    public static boolean investGold(int goldAmount) {
         boolean isSuccesful = BalanceMenager.safeCheckBalance(goldAmount);
         if (isSuccesful) {
             InvestorMenager.investMoney(goldAmount);
+            return true;
         }
+        return false;
     }
 
-    public static void upgradeInvestor(int idInv) {
+    public static boolean upgradeInvestor(int idInv) {
         boolean isSuccesful = BalanceMenager.safeChangeBalance(OperationInvestor.UPGRADE.getCost());
-        if (isSuccesful)
+        if (isSuccesful) {
             InvestorMenager.upgradeInvestor(idInv);
+            return true;
+        }
+        return false;
     }
 
     public static void sellInvestor(int idInv) {
@@ -115,7 +120,7 @@ public class OperationMenager {
         SellerMenager.earnGold();
     }
 
-    public static void upgradeSeller(int selId) {
+    public static boolean upgradeSeller(int selId) {
         Class expectedClass = SellerMenager.findSellerById(selId).get().getClass();
         int basicCost = OperationSeller.UPGRADE.getCost();
         int upgradeCost = 0;
@@ -125,8 +130,12 @@ public class OperationMenager {
                 break;
             }
         }
-        BalanceMenager.safeChangeBalance(upgradeCost);
-        SellerMenager.upgradeSeller(selId);
+        boolean isSuccessful=BalanceMenager.safeChangeBalance(upgradeCost);
+        if(isSuccessful){
+            SellerMenager.upgradeSeller(selId);
+            return true;
+        }
+        return false;
     }
 
     public static void sellSeller(int selId) {
@@ -141,70 +150,90 @@ public class OperationMenager {
         }
     }
 
-    public static void buyInvestor() {
+    public static boolean buyInvestor() {
         boolean isSuccesful = BalanceMenager.safeChangeBalance(InvestorMenager.countBuyCost());
-        if (isSuccesful)
+        if (isSuccesful) {
             InvestorMenager.createInvestor();
+            return true;
+        }
+        return false;
     }
 
-    public static void buyBooksSeller() {
+    public static boolean buyBooksSeller() {
         boolean isSuccesful = BalanceMenager.safeChangeBalance(SellerMenager.countBuyCost(SellerBooks.class));
-        if (isSuccesful)
+        if (isSuccesful) {
             SellerMenager.createConcreteSeller(SellerBooks.class);
+            return true;
+        }
+        return false;
     }
 
-    public static void buyBoardGamesSeller() {
+    public static boolean buyBoardGamesSeller() {
         boolean isSuccesful = BalanceMenager.safeChangeBalance(SellerMenager.countBuyCost(SellerBoardGames.class));
-        if (isSuccesful)
+        if (isSuccesful) {
             SellerMenager.createConcreteSeller(SellerBoardGames.class);
+            return true;
+        }
+        return false;
     }
 
-    public static void buyComputerGamesSeller() {
+    public static boolean buyComputerGamesSeller() {
         boolean isSuccesful = BalanceMenager.safeChangeBalance(SellerMenager.countBuyCost(SellerComputerGames.class));
-        if (isSuccesful)
+        if (isSuccesful){
             SellerMenager.createConcreteSeller(SellerComputerGames.class);
+            return true;
+        }
+        return false;
     }
 
-    public static void buyHousesSeller() {
+    public static boolean buyHousesSeller() {
         boolean isSuccesful = BalanceMenager.safeChangeBalance(SellerMenager.countBuyCost(SellerHouses.class));
-        if (isSuccesful)
+        if (isSuccesful) {
             SellerMenager.createConcreteSeller(SellerHouses.class);
+            return true;
+        }
+        return false;
     }
 
-    public static void buyMachine() {
+    public static boolean buyMachine() {
         boolean isSuccesful = BalanceMenager.safeChangeBalance(Machine.getMACHINE_COST());
         if (isSuccesful) {
             MachineMenager.unlockMachine();
+            return true;
         }
+        return false;
     }
 
-    public static void performWork(int howManyTimes) {
-        boolean isSuccessfulCondition1 = MachineMenager.isMachineUnlocked();
+    public static boolean performWork(int howManyTimes) {
         boolean isSuccessfulCondition2 = BalanceMenager.safeCheckBalance(Machine.getMACHINE_SELLER_USE());
-        if (isSuccessfulCondition1 && isSuccessfulCondition2) {
-            BalanceMenager.safeChangeBalance(Machine.getMACHINE_SELLER_USE());
+        if (isSuccessfulCondition2) {
+            BalanceMenager.safeChangeBalance(Machine.getMACHINE_SELLER_USE()*howManyTimes);
             MachineMenager.performWorkMultiple(howManyTimes);
+            return true;
         }
+        return false;
     }
 
-    public static void performInvestment(int howManyTimes, int goldAmount) {
-        boolean isSuccessfulCondition1 = MachineMenager.isMachineUnlocked();
+    public static boolean performInvestment(int howManyTimes, int goldAmount) {
         boolean isSuccessfulCondition2 = BalanceMenager.safeCheckBalance(Machine.getMACHINE_INVESTER_USE());
         boolean isSuccessfulCondition3 = BalanceMenager.safeCheckBalance(goldAmount);
-        if (isSuccessfulCondition1 && isSuccessfulCondition2 && isSuccessfulCondition3) {
-            BalanceMenager.safeChangeBalance(Machine.getMACHINE_INVESTER_USE());
+        if (isSuccessfulCondition2 && isSuccessfulCondition3) {
+            BalanceMenager.safeChangeBalance(Machine.getMACHINE_INVESTER_USE()*howManyTimes);
             MachineMenager.performInvestmentMultiple(howManyTimes, goldAmount);
+            return true;
         }
+        return false;
     }
 
-    public static void performWorkInvestment(int howManyTimes, int goldAmount) {
-        boolean isSuccessfulCondition1 = MachineMenager.isMachineUnlocked();
+    public static boolean performWorkInvestment(int howManyTimes, int goldAmount) {
         boolean isSuccessfulCondition2 = BalanceMenager.safeCheckBalance(Machine.getMACHINE_TOGETHER_USE());
         boolean isSuccessfulCondition3 = BalanceMenager.safeCheckBalance(goldAmount);
-        if (isSuccessfulCondition1 && isSuccessfulCondition2 && isSuccessfulCondition3) {
-            BalanceMenager.safeChangeBalance(Machine.getMACHINE_TOGETHER_USE());
+        if (isSuccessfulCondition2 && isSuccessfulCondition3) {
+            BalanceMenager.safeChangeBalance(Machine.getMACHINE_TOGETHER_USE()*howManyTimes);
             MachineMenager.performWorkInvestmentMultiple(howManyTimes, goldAmount);
+            return true;
         }
+        return false;
     }
 
     public static void makeMethodTree() {

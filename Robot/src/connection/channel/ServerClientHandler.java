@@ -6,14 +6,11 @@ import service.operate.*;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.Channel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
-import java.sql.SQLOutput;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 @Getter
@@ -53,12 +50,24 @@ public class ServerClientHandler {
         if (key.isWritable()) {
             ByteBuffer buffer = ByteBuffer.allocate(256);
 
-            buffer.put(messageToClient.getBytes());
+            buffer.put(("WITH_REPLY|"+messageToClient).getBytes());
             buffer.flip();
 
             clientChannel.write(buffer);
 
             key.interestOps(SelectionKey.OP_READ);
+        }
+    }
+
+    public void sendMessageWithoutResponse(String messageToClient) throws IOException {
+        selector.select();
+        if (key.isWritable()) {
+            ByteBuffer buffer = ByteBuffer.allocate(256);
+
+            buffer.put(("WITHOUT_REPLY|"+messageToClient).getBytes());
+            buffer.flip();
+
+            clientChannel.write(buffer);
         }
     }
 
@@ -132,108 +141,101 @@ public class ServerClientHandler {
         }
     }
 
-    public void doInvestorOperationIfPossible() throws IOException {
-        if(isOperationPossible(InvestorMenager.returnIdsList())) {
-            investorOperationChoice();
-        }
-    }
-
     public void investorOperationChoice() throws IOException {
         OperationMenager.displayInvestorOperations();
         int userChoice;
+        boolean isDone=true;
         int investorOperationChoice = receiveCorrectResponseRange(MIN_RANGE_INVESTOR_OPERATION, MAX_RANGE_INVESTOR_OPERATION);
         System.out.println("Wybor inwestora operacji: "+investorOperationChoice);
         switch (investorOperationChoice) {
             case 1:
                 userChoice = receiveCorrectResponseList(InvestorMenager.returnIdsList());
                 OperationMenager.showInvestor(userChoice);
+                operationRealization(isDone);
                 break;
             case 2:
                 userChoice = receiveCorrectResponseRange(0, (int) user.getGold());
-                OperationMenager.investGold(userChoice);
-                operationRealizated();
+                isDone = OperationMenager.investGold(userChoice);
+                operationRealization(isDone);
                 break;
             case 3:
                 userChoice = receiveCorrectResponseList(InvestorMenager.returnIdsList());
-                OperationMenager.upgradeInvestor(userChoice);
-                operationRealizated();
+                isDone = OperationMenager.upgradeInvestor(userChoice);
+                operationRealization(isDone);
                 break;
             case 4:
                 userChoice = receiveCorrectResponseList(InvestorMenager.returnIdsList());
                 OperationMenager.sellInvestor(userChoice);
-                operationRealizated();
+                operationRealization(isDone);
                 break;
             default:
-                throw new RuntimeException("Bad number");
-        }
-    }
-
-    public void doSellerOperationIfPossible() throws IOException {
-        if(isOperationPossible(SellerMenager.returnIdsList())){
-            sellerOperationChoice();
+                throw new RuntimeException("Incorrect number");
         }
     }
 
     public void sellerOperationChoice() throws IOException{
         OperationMenager.displaySellerOperations();
         int userChoice;
+        boolean isDone=true;
         int sellerOperationChoice = receiveCorrectResponseRange(MIN_RANGE_SELLER_OPERATION, MAX_RANGE_SELLER_OPERATION);
         System.out.println("Wybor sellera operacji: "+sellerOperationChoice);
         switch (sellerOperationChoice) {
             case 1:
                 userChoice = receiveCorrectResponseList(SellerMenager.returnIdsList());
                 OperationMenager.showSeller(userChoice);
+                operationRealization(isDone);
                 break;
             case 2:
                 OperationMenager.earnGold();
-                operationRealizated();
+                operationRealization(isDone);
                 break;
             case 3:
                 userChoice = receiveCorrectResponseList(SellerMenager.returnIdsList());
-                OperationMenager.upgradeSeller(userChoice);
-                operationRealizated();
+                isDone = OperationMenager.upgradeSeller(userChoice);
+                operationRealization(isDone);
                 break;
             case 4:
                 userChoice = receiveCorrectResponseList(SellerMenager.returnIdsList());
                 OperationMenager.sellSeller(userChoice);
-                operationRealizated();
+                operationRealization(isDone);
                 break;
             default:
-                throw new RuntimeException("Bad number");
+                throw new RuntimeException("Incorrect number");
         }
     }
 
     public void buyOperationChoice() throws IOException{
         OperationMenager.displayBuyOperations();
         int buyOperationChoice = receiveCorrectResponseRange(MIN_RANGE_BUY_OPERATION, MAX_RANGE_BUY_OPERATION);
+        boolean isDone = true;
         System.out.println("Wybor buy operacji: "+buyOperationChoice);
         switch (buyOperationChoice) {
             case 1:
-                OperationMenager.buyInvestor();
-                operationRealizated();
+                isDone = OperationMenager.buyInvestor();
+                operationRealization(isDone);
                 break;
             case 2:
-                OperationMenager.buyBooksSeller();
-                operationRealizated();
+                isDone = OperationMenager.buyBooksSeller();
+                operationRealization(isDone);
                 break;
             case 3:
-                OperationMenager.buyBoardGamesSeller();
-                operationRealizated();
+                isDone = OperationMenager.buyBoardGamesSeller();
+                operationRealization(isDone);
                 break;
             case 4:
-                OperationMenager.buyComputerGamesSeller();
-                operationRealizated();
+                isDone = OperationMenager.buyComputerGamesSeller();
+                operationRealization(isDone);
                 break;
             case 5:
-                OperationMenager.buyHousesSeller();
-                operationRealizated();
+                isDone = OperationMenager.buyHousesSeller();
+                operationRealization(isDone);
                 break;
             case 6:
-                OperationMenager.buyMachine();
-                operationRealizated();
+                isDone = OperationMenager.buyMachine();
+                operationRealization(isDone);
                 break;
             default:
-                throw new RuntimeException("Bad number");
+                throw new RuntimeException("Incorrect number");
         }
     }
 
@@ -241,45 +243,103 @@ public class ServerClientHandler {
         OperationMenager.displayOtherOperations();
         int timesChoice;
         int goldChoice;
+        boolean isDone = true;
+        boolean isMachineUnlocked = true;
         int otherOperationChoice = receiveCorrectResponseRange(MIN_RANGE_OTHER_OPERATION, MAX_RANGE_OTHER_OPERATION);
         System.out.println("Wybor other operacji: "+otherOperationChoice);
         switch (otherOperationChoice) {
             case 1:
                 OperationMenager.checkGold();
+                operationRealization(isDone);
                 break;
             case 2:
-                timesChoice = receiveCorrectResponseRange(1,100);
-                OperationMenager.performWork(timesChoice);
-                operationRealizated();
+                isMachineUnlocked = MachineMenager.isMachineUnlocked();
+                isDone = ifMachinePerformWork(isMachineUnlocked);
+                operationRealization(isDone);
                 break;
             case 3:
-                timesChoice = receiveCorrectResponseRange(1,100);
-                goldChoice = receiveCorrectResponseRange(0, (int) user.getGold());
-                OperationMenager.performInvestment(timesChoice, goldChoice);
-                operationRealizated();
+                isMachineUnlocked = MachineMenager.isMachineUnlocked();
+                isDone = ifMachinePerformInvestment(isMachineUnlocked);
+                operationRealization(isDone);
                 break;
             case 4:
-                timesChoice = receiveCorrectResponseRange(1,100);
-                goldChoice = receiveCorrectResponseRange(0, (int) user.getGold());
-                OperationMenager.performWorkInvestment(timesChoice, goldChoice);
-                operationRealizated();
+                isMachineUnlocked = MachineMenager.isMachineUnlocked();
+                isDone = ifMachinePerformWorkInvestment(isMachineUnlocked);
+                operationRealization(isDone);
                 break;
             default:
-                throw new RuntimeException("Bad number");
+                throw new RuntimeException("Incorrect number");
         }
     }
 
-    public boolean isOperationPossible(List <Integer> integersList) throws IOException{
+    public void doInvestorOperationIfPossible() throws IOException {
+        if(haveListElements(InvestorMenager.returnIdsList())) {
+            investorOperationChoice();
+        }else
+            sendMessageWithoutResponse("Operacja niemozliwa do zrealizowania, z powodu braku Investorow");
+    }
+
+    public void doSellerOperationIfPossible() throws IOException {
+        if(haveListElements(SellerMenager.returnIdsList())){
+            sellerOperationChoice();
+        }else
+            sendMessageWithoutResponse("Operacja niemozliwa do zrealizowania z powodu braku Sellerow");
+    }
+
+    public boolean ifMachinePerformWork(boolean isMachineUnlocked) throws IOException{
+        if(isMachineUnlocked) {
+            int timesChoice = receiveCorrectResponseRange(1, 100);
+            boolean hasUserMoney = OperationMenager.performWork(timesChoice);
+            if(hasUserMoney)
+                return true;
+            else
+                return false;
+        }
+        else
+            return false;
+    }
+
+    public boolean ifMachinePerformInvestment(boolean isMachineUnlocked) throws IOException{
+        if(isMachineUnlocked) {
+            int timesChoice = receiveCorrectResponseRange(1, 100);
+            int goldAmount = receiveCorrectResponseRange(0, (int) BalanceMenager.returnGoldAmount());
+            boolean hasUserMoney = OperationMenager.performInvestment(timesChoice, goldAmount);
+            if(hasUserMoney)
+                return true;
+            else
+                return false;
+        }
+        else
+            return false;
+    }
+
+    public boolean ifMachinePerformWorkInvestment(boolean isMachineUnlocked) throws IOException{
+        if(isMachineUnlocked) {
+            int timesChoice = receiveCorrectResponseRange(1, 100);
+            int goldAmount = receiveCorrectResponseRange(0, (int) BalanceMenager.returnGoldAmount());
+            boolean hasUserMoney = OperationMenager.performWorkInvestment(timesChoice, goldAmount);
+            if(hasUserMoney)
+                return true;
+            else
+                return false;
+        }
+        else
+            return false;
+    }
+
+    public boolean haveListElements(List <Integer> integersList) throws IOException{
         if(integersList.size()>0){
             return true;
         }else{
-            System.out.println("Operacja niemozliwa do zrealizowania z powodu braku elementow na ktorych mozna ja zrealizowac");
             return false;
         }
     }
 
-    public void operationRealizated(){
-        System.out.println("Operacja zostala zrealizowana pomyslnie");
+    public void operationRealization(boolean isDone) throws IOException {
+        if(isDone)
+            sendMessageWithoutResponse("Operacja zostala zrealizowana pomyslnie");
+        else
+            sendMessageWithoutResponse("Operacja nie zostala zrealizowana");
     }
 
     private void configureUser() throws IOException {

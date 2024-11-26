@@ -24,7 +24,7 @@ public class User {
 
     public User(String nick){
         this.nick=nick;
-        gold=10000;
+        gold=100000;
     }
 
     @Override
