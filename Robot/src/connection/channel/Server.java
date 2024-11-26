@@ -1,7 +1,9 @@
 package connection.channel;
 
 import lombok.Getter;
+import modules.User;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.channels.*;
@@ -13,8 +15,9 @@ public class Server {
     private static ServerSocketChannel serverChannel;
     private static Selector selector;
     private static SelectionKey previousKey;
+    private static List<User> nickList = new ArrayList<>();
 
-    private static void initialChannelOperations() throws IOException {
+    private static void initialChannelOperations() throws IOException{
         serverChannel = ServerSocketChannel.open();
         serverChannel.bind(new InetSocketAddress(SERVER_ADDRESS, PORT));
         serverChannel.configureBlocking(false);
@@ -29,9 +32,17 @@ public class Server {
         return selectedKeys.iterator();
     }
 
+    private static void loadFile() throws IOException, ClassNotFoundException {
+        File file = new File("userRecords.txt");
+        if (file.length()>0) {
+            nickList = User.loadUser(file.toString());
+        }
+    }
+
     public static void startServer() {
         try {
             initialChannelOperations();
+            loadFile();
 
             while (true) {
                 Iterator<SelectionKey> iter = initialSelectorOperations();
@@ -39,6 +50,8 @@ public class Server {
             }
         } catch (IOException e) {
             e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -67,7 +80,7 @@ public class Server {
     private static void passClientHandler(SelectionKey key) throws IOException {
         SocketChannel clientChannel = (SocketChannel) key.channel();
         ServerClientHandler clientHandler = new ServerClientHandler(clientChannel);
-        clientHandler.handleClient(previousKey, key, selector);
+        clientHandler.handleClient(previousKey, key, selector, nickList);
 
         if(clientHandler.getIsChannelOpen()==0){
             clientChannel.close();

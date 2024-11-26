@@ -9,11 +9,13 @@ import modules.interfaces.RobotInvestor;
 import service.Generator;
 import service.operate.InvestorMenager;
 
+import java.io.Serializable;
 import java.util.*;
 
 @Setter
 @Getter
-public class Investor extends AbstractRobot implements RobotInvestor, Comparable<Investor>{
+public class Investor extends AbstractRobot implements RobotInvestor, Comparable<Investor>, Serializable {
+    private static final long serialVersionUID = 1L;
     private int invId;
     private Map<StatsInvestor, Integer> statistics = new LinkedHashMap<>();
 

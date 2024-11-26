@@ -1,6 +1,7 @@
 package service.operate;
 
 import lombok.Getter;
+import lombok.Setter;
 import modules.User;
 
 import java.util.ArrayList;
@@ -8,6 +9,7 @@ import java.util.List;
 
 public class UserMenager {
     @Getter
+    @Setter
     private static List<User> userList = new ArrayList<>();
     @Getter
     private static String actualUserNick;

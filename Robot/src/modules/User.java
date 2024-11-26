@@ -8,19 +8,19 @@ import service.Sorting;
 import service.operate.InvestorMenager;
 import service.operate.SellerMenager;
 
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
 @Getter
 @Setter
-public class User {
-
+public class User implements Serializable {
+    private static final long serialVersionUID = 1L;
     private double gold;
     private String nick;
     private Machine machine;
     private List<Investor> ownedInvestors = new ArrayList<>();
     private List<AbstractSeller> ownedSellers = new ArrayList<>();
-
 
     public User(String nick){
         this.nick=nick;
@@ -114,6 +114,18 @@ public class User {
 
     public void unlockMachine(){
         machine = new Machine();
+    }
+
+    public static void saveUser(List<User> userList, String fileName) throws IOException {
+        try(ObjectOutputStream output = new ObjectOutputStream(new FileOutputStream(fileName))){
+            output.writeObject(userList);
+        }
+    }
+
+    public static List<User> loadUser(String fileName) throws IOException, ClassNotFoundException{
+        try(ObjectInputStream input = new ObjectInputStream(new FileInputStream(fileName))){
+            return (List<User>) input.readObject();
+        }
     }
 }
 

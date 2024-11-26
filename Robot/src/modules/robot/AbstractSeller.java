@@ -10,6 +10,7 @@ import modules.interfaces.RobotSeller;
 import service.Generator;
 import service.operate.InvestorMenager;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
@@ -17,6 +18,7 @@ import java.util.function.Function;
 @Setter
 @Getter
 public abstract class AbstractSeller extends AbstractRobot implements RobotSeller{
+    private static final long serialVersionUID = 1L;
     private int sellerId;
     private HashMap<StatsSeller, Integer> statistics = new HashMap<>();
 

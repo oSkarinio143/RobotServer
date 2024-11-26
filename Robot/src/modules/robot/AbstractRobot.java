@@ -8,12 +8,14 @@ import modules.interfaces.Robot;
 import modules.StatsSeller;
 import service.Generator;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
 @Getter
 @Setter
-public abstract class AbstractRobot implements Robot{
+public abstract class AbstractRobot implements Robot, Serializable{
+    private static final long serialVersionUID = 1L;
     private int robotId;
     private Level level;
     private Rarity rarity;

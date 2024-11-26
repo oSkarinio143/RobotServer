@@ -4,6 +4,7 @@ import lombok.Getter;
 import modules.User;
 import service.operate.*;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
@@ -37,10 +38,13 @@ public class ServerClientHandler {
         this.clientChannel = clientChannel;
     }
 
-    public void handleClient(SelectionKey previousKey, SelectionKey key, Selector selector) throws IOException {
+    public void handleClient(SelectionKey previousKey, SelectionKey key, Selector selector, List<User> nickList) throws IOException {
         this.selector = selector;
         this.key = key;
         this.previousKey = previousKey;
+        this.nickList = nickList;
+        UserMenager.setUserList(nickList);
+        displayUsersInformations();
         configureUser();
         choiceTypeOperation();
     }
@@ -138,7 +142,13 @@ public class ServerClientHandler {
                 break;
             default:
                 isChannelOpen = 0;
+                saveAllUsers();
+
         }
+    }
+
+    private void saveAllUsers() throws IOException {
+        User.saveUser(nickList, "userRecords.txt");
     }
 
     public void investorOperationChoice() throws IOException {
@@ -342,6 +352,14 @@ public class ServerClientHandler {
             sendMessageWithoutResponse("Operacja nie zostala zrealizowana");
     }
 
+    private void displayUsersInformations(){
+        System.out.println("Ilosc uzytkownikow zarejestrowanych - "+nickList.size());
+        System.out.println("Nicki zarejestrowanych uzytkownikow:");
+        for (User user : nickList) {
+            System.out.println(user);
+        }
+    }
+
     private void configureUser() throws IOException {
         if(ifNewUser()){
             String nick = getNick();
@@ -359,7 +377,7 @@ public class ServerClientHandler {
 
     public void getNewUser(String nick){
         user = UserMenager.createNewUser(nick);
-        nickList.add(user);
+        //nickList.add(user);
     }
 
     public void getExistUser(String nick){

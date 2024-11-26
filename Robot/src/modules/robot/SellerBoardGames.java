@@ -5,9 +5,11 @@ import lombok.Setter;
 import modules.Level;
 import modules.Rarity;
 
+import java.io.Serializable;
 import java.util.Map;
 
-public class SellerBoardGames extends SellerGames{
+public class SellerBoardGames extends SellerGames implements Serializable {
+    private static final long serialVersionUID = 1L;
     private int sellerBoardGamesId;
 
     @Getter

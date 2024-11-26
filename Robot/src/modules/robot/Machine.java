@@ -8,10 +8,12 @@ import modules.interfaces.RobotSeller;
 import service.operate.OperationMenager;
 import service.operate.UserMenager;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Machine {
+public class Machine implements Serializable {
+    private static final long serialVersionUID = 1L;
     private User user = UserMenager.actualUsedUser();
     private List<Investor> investorsList = new ArrayList<>();
     private List<AbstractSeller> sellerList = new ArrayList<>();

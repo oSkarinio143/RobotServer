@@ -5,9 +5,11 @@ import lombok.Setter;
 import modules.Level;
 import modules.Rarity;
 
+import java.io.Serializable;
 import java.util.Map;
 
-public class SellerBooks extends AbstractSeller{
+public class SellerBooks extends AbstractSeller implements Serializable{
+    private static final long serialVersionUID = 1L;
     private int sellerBookId;
 
     @Getter
