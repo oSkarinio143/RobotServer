@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Machine {
-    private User user = UserMenager.getUser();
+    private User user = UserMenager.actualUsedUser();
     private List<Investor> investorsList = new ArrayList<>();
     private List<AbstractSeller> sellerList = new ArrayList<>();
     @Getter

@@ -10,6 +10,9 @@ public class ConnectionMenager {
         startServer();
         startClient();
         startClient();
+        startClient();
+        startClient();
+        startClient();
     }
 
     public static void startServer(){

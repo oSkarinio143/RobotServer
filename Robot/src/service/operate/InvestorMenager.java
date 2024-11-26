@@ -16,11 +16,16 @@ import java.util.Map;
 import static service.Generator.*;
 
 public class InvestorMenager {
-    private static User user = UserMenager.getUser();
-    private static List<Investor> ownedInvestors = user.getOwnedInvestors();
+    private static User user;
+    private static List<Investor> ownedInvestors = new ArrayList<>();
+
+    public static void setUserInv(){
+        user = UserMenager.actualUsedUser();
+        ownedInvestors = user.getOwnedInvestors();
+        Investor.setQuantityInv(ownedInvestors.size());
+    }
 
     public static Investor findInvestorById(int idInv){
-        //Spytac Chata - czy to ma sens niby w pewien sposob zapobiega nieoczeiwanym bleda i wyswietla moj blad ktory moge obsluzyc wiec chyba ta
         List<Investor> listInvestors = user.getOwnedInvestors();
 
         for (Investor investor : listInvestors) {

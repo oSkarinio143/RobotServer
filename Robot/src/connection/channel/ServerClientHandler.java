@@ -10,6 +10,7 @@ import java.nio.channels.Channel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
+import java.sql.SQLOutput;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -45,14 +46,6 @@ public class ServerClientHandler {
         this.previousKey = previousKey;
         configureUser();
         choiceTypeOperation();
-    }
-
-    public void getSameUser(){
-
-    }
-
-    public void addUserToList(){
-        String keyString = key.channel().toString();
     }
 
     public void sendMessage(String messageToClient) throws IOException {
@@ -116,6 +109,7 @@ public class ServerClientHandler {
             clientChannel.close();
         }
     }
+
     public void choiceTypeOperation() throws IOException {
         OperationMenager.displayOperations();
         int choiceUser = receiveCorrectResponseRange(MIN_RANGE_TYPE_OPERATION, MAX_RANGE_TYPE_OPERATION);
@@ -141,12 +135,6 @@ public class ServerClientHandler {
     public void doInvestorOperationIfPossible() throws IOException {
         if(isOperationPossible(InvestorMenager.returnIdsList())) {
             investorOperationChoice();
-        }
-    }
-
-    public void doSellerOperationIfPossible() throws IOException {
-        if(isOperationPossible(SellerMenager.returnIdsList())){
-            sellerOperationChoice();
         }
     }
 
@@ -177,6 +165,12 @@ public class ServerClientHandler {
                 break;
             default:
                 throw new RuntimeException("Bad number");
+        }
+    }
+
+    public void doSellerOperationIfPossible() throws IOException {
+        if(isOperationPossible(SellerMenager.returnIdsList())){
+            sellerOperationChoice();
         }
     }
 
@@ -289,32 +283,31 @@ public class ServerClientHandler {
     }
 
     private void configureUser() throws IOException {
-        String lastNick="";
-        String nick="";
         if(ifNewUser()){
-            nick = getNick();
-            if(ifNewNick(nick))
+            String nick = getNick();
+            if(ifNewNick(nick)) {
                 getNewUser(nick);
-            else
+            }
+            else {
                 getExistUser(nick);
-        }else
-            getExistUser(lastNick);
-        lastNick = nick;
+            }
+        }else {
+            getSameUser();
+        }
+        UserMenager.setUserEverywhere();
     }
 
     public void getNewUser(String nick){
-        UserMenager.createNewUser(nick);
-        user = UserMenager.getUser();
+        user = UserMenager.createNewUser(nick);
         nickList.add(user);
     }
 
     public void getExistUser(String nick){
-        for (User userNick : nickList) {
-            System.out.println("wartosc w liscie"+userNick);
-            if(nick.equals(userNick.toString())){
-                user = userNick;
-            }
-        }
+        user = UserMenager.findUserByNick(nick);
+    }
+
+    public void getSameUser(){
+        user = UserMenager.findUserByNick(UserMenager.getActualUserNick());
     }
 
     public String getNick() throws IOException{

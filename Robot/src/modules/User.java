@@ -14,15 +14,17 @@ import java.util.List;
 @Getter
 @Setter
 public class User {
-    //private static User instance;
-    private double gold=100000;
+
+    private double gold;
     private String nick;
     private Machine machine;
     private List<Investor> ownedInvestors = new ArrayList<>();
     private List<AbstractSeller> ownedSellers = new ArrayList<>();
 
+
     public User(String nick){
         this.nick=nick;
+        gold=10000;
     }
 
     @Override

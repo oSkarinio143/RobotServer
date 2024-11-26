@@ -13,8 +13,28 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class SellerMenager {
-    private static User user = UserMenager.getUser();
-    private static List<AbstractSeller> ownedSellers = user.getOwnedSellers();
+    private static User user;
+    private static List<AbstractSeller> ownedSellers = new ArrayList<>();
+
+    public static void setUserSell(){
+        user = UserMenager.actualUsedUser();
+        ownedSellers = user.getOwnedSellers();
+        SellerBooks.setSellerBookQuantity(0);
+        SellerBoardGames.setSellerBoardGamesQuantity(0);
+        SellerComputerGames.setSellerComputerGamesQuantity(0);
+        SellerHouses.setSellerHousesQuantity(0);
+        AbstractSeller.setQuantitySel(0);
+        for (AbstractSeller seller : ownedSellers) {
+            if(seller instanceof SellerBooks)
+                SellerBooks.setSellerBookQuantity(SellerBooks.getSellerBookQuantity()+1);
+            if(seller instanceof SellerBoardGames)
+                SellerBoardGames.setSellerBoardGamesQuantity(SellerBoardGames.getSellerBoardGamesQuantity()+1);
+            if(seller instanceof SellerComputerGames)
+                SellerComputerGames.setSellerComputerGamesQuantity(SellerComputerGames.getSellerComputerGamesQuantity()+1);
+            if(seller instanceof SellerHouses)
+                SellerHouses.setSellerHousesQuantity(SellerHouses.getSellerHousesQuantity() + 1);
+        }
+    }
 
     public static Optional<AbstractSeller> findSellerById(int idSeller){
         for (AbstractSeller seller : user.getOwnedSellers()) {

@@ -8,7 +8,11 @@ import modules.User;
 @Getter
 @Setter
 public class BalanceMenager {
-    private static User user = UserMenager.getUser();
+    private static User user;
+
+    public static void setUserBalance(){
+        user = UserMenager.actualUsedUser();
+    }
 
     public static double returnGoldAmount(){
         return user.getGold();
@@ -28,7 +32,6 @@ public class BalanceMenager {
             userGold-=change;
             user.setGold(userGold);
         }
-        //Operator warunkowy nie do instrukcji które mają efekty uboczne
     }
 
     public static boolean safeCheckBalance(int amount){
@@ -36,7 +39,7 @@ public class BalanceMenager {
             checkBalance(amount);
             return true;
         }catch (InsufficientBalanceException e){
-            System.out.println("User doesn't have enough money");
+            System.out.println("Uzytkownik nie ma golda");
             return false;
         }
     }
@@ -46,7 +49,7 @@ public class BalanceMenager {
             changeBalance(change);
             return true;
         }catch (InsufficientBalanceException e){
-            System.out.println("User doesn't have enough money");
+            System.out.println("Uzytkownik nie ma golda");
             return false;
         }
     }

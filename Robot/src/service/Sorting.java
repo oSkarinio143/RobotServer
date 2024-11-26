@@ -39,12 +39,12 @@ public class Sorting {
     }
 
     public static void sortListInvestor (){
-        User user = UserMenager.getUser();
+        User user = UserMenager.actualUsedUser();
         Collections.sort(user.getOwnedInvestors());
     }
 
     public static void sortListSeller (){
-        User user = UserMenager.getUser();
+        User user = UserMenager.actualUsedUser();
         user.getOwnedSellers().sort((a, b) -> Integer.compare(a.getSellerId(), b.getSellerId()));
     }
 
