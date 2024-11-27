@@ -53,7 +53,19 @@ public class SellerMenager {
             System.out.println(value+" - "+seller.getStatistics().get(i));
             i++;
         }
+    }
 
+    public static String getSellerStats(int selId){
+        Optional<AbstractSeller> optionalSeller = findSellerById(selId);
+        AbstractSeller seller = optionalSeller.get();
+        int i=0;
+        String part;
+        String stats="";
+        for (StatsSeller value : StatsSeller.values()) {
+            part = (value+" - "+seller.getStatistics().get(i)+"|");
+            stats+=part;
+        }
+        return stats;
     }
 
     public static void displaySellerClass(AbstractSeller seller){
@@ -69,6 +81,22 @@ public class SellerMenager {
         else if(seller instanceof SellerHouses){
             System.out.println("Specialisation - HOUSES");
         }
+    }
+
+    public static String getSellerClass(AbstractSeller seller){
+        if(seller instanceof SellerBooks){
+            return ("Specialisation - BOOKS");
+        }
+        else if(seller instanceof SellerBoardGames){
+            return ("Specialisation - BOARD GAMES");
+        }
+        else if(seller instanceof SellerComputerGames){
+            return ("Specialisation - COMPUTER GAMES");
+        }
+        else if(seller instanceof SellerHouses){
+            return ("Specialisation - HOUSES");
+        }
+        throw new RuntimeException("Error");
     }
 
     public static <T extends AbstractSeller> void createConcreteSeller(Class<T> type){

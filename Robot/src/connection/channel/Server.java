@@ -1,7 +1,9 @@
 package connection.channel;
 
 import lombok.Getter;
+import lombok.Setter;
 import modules.User;
+import modules.interfaces.RobotSeller;
 
 import java.io.File;
 import java.io.IOException;
@@ -15,6 +17,8 @@ public class Server {
     private static ServerSocketChannel serverChannel;
     private static Selector selector;
     private static SelectionKey previousKey;
+    @Getter
+    @Setter
     private static List<User> nickList = new ArrayList<>();
 
     private static void initialChannelOperations() throws IOException{
@@ -63,7 +67,7 @@ public class Server {
             if (key.isAcceptable()) {
                 connectionAccept(key);
                 iter.remove();
-            }else {
+            }else{
                 passClientHandler(key);
             }
             previousKey = key;
@@ -82,7 +86,7 @@ public class Server {
         ServerClientHandler clientHandler = new ServerClientHandler(clientChannel);
         clientHandler.handleClient(previousKey, key, selector, nickList);
 
-        if(clientHandler.getIsChannelOpen()==0){
+        if(ServerClientHandler.getIsChannelOpen()==0){
             clientChannel.close();
         }
     }

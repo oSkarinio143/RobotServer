@@ -1,5 +1,7 @@
 package service.operate;
 
+import connection.channel.Server;
+import connection.channel.ServerClientHandler;
 import lombok.Getter;
 import lombok.Setter;
 import modules.OperationInvestor;
@@ -8,6 +10,8 @@ import modules.User;
 import modules.interfaces.RobotSeller;
 import modules.robot.*;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -234,6 +238,17 @@ public class OperationMenager {
             return true;
         }
         return false;
+    }
+
+    public static void clearUserList(){
+        String file = "userRecords.txt";
+        try(FileWriter writer = new FileWriter(file)){
+            writer.write("");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        ServerClientHandler.setIsChannelOpen(0);
+        Server.setNickList(new ArrayList<>());
     }
 
     public static void makeMethodTree() {

@@ -34,11 +34,11 @@ public class Client {
     }
 
     public void continueCommunication() throws IOException {
-        while(true) {
+        while (true) {
             selector.select();
             Set<SelectionKey> selectedKeys = selector.selectedKeys();
 
-            for(SelectionKey key : selectedKeys){
+            for (SelectionKey key : selectedKeys) {
                 if (key.isReadable()) {
                     connectionHandle();
                 }
@@ -48,14 +48,17 @@ public class Client {
 
     private void connectionHandle() throws IOException {
         String receivedMessage = receiveMessage();
-        String[] parts = receivedMessage.split("\\|", 2);
-        if(parts.length>=2) {
-            String message = parts[1];
-            String type = parts[0];
-            System.out.println(message);
-            if(type.equals("WITH_REPLY")) {
-                sendMessage();
-            }
+        String[] parts = receivedMessage.split("\\|");
+        for (int i = 0; i < parts.length; i = i + 2) {
+                //JAKIS BLAD
+                if(parts.length>=2) {
+                    String type = parts[i].trim();
+                    String message = parts[i + 1].trim();
+                    System.out.println(message);
+                    if (type.equals("WITH_REPLY")) {
+                        sendMessage();
+                    }
+                }
         }
     }
 
@@ -75,9 +78,9 @@ public class Client {
         if (clientChannel.isOpen()) {
             String response = scanner.nextLine();
 
-            while(response.trim().isEmpty()){
+            while (response.trim().isEmpty()) {
                 System.out.println("Wprowadziles pusta linijke, sproboj jeszcze raz: ");
-                response=scanner.nextLine();
+                response = scanner.nextLine();
             }
 
             buffer.put(response.getBytes());

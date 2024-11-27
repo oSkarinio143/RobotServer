@@ -1,7 +1,12 @@
 package connection.channel;
 
 import lombok.Getter;
+import lombok.Setter;
+import modules.OperationInvestor;
+import modules.OperationSeller;
 import modules.User;
+import modules.interfaces.RobotSeller;
+import modules.robot.*;
 import service.operate.*;
 
 import java.io.File;
@@ -12,8 +17,10 @@ import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
+@Setter
 @Getter
 public class ServerClientHandler {
     private static final int MIN_RANGE_TYPE_OPERATION = 1;
@@ -25,14 +32,21 @@ public class ServerClientHandler {
     private static final int MIN_RANGE_BUY_OPERATION = 1;
     private static final int MAX_RANGE_BUY_OPERATION = 6;
     private static final int MIN_RANGE_OTHER_OPERATION = 1;
-    private static final int MAX_RANGE_OTHER_OPERATION = 4;
+    private static final int MAX_RANGE_OTHER_OPERATION = 5;
+    @Setter
+    @Getter
     private static List<User> nickList = new ArrayList<>();
+    private static final List<Double> values = new ArrayList<>(List.of(RobotSeller.BOOK_SELLER_COST_RATE, RobotSeller.BOARD_GAMES_SELLER_COST_RATE,
+            RobotSeller.COMPUTER_GAMES_SELLER_COST_RATE, RobotSeller.HOUSES_SELLER_COST_RATE));
+    @Getter
+    @Setter
+    private static int isChannelOpen;
     private User user;
-    private SocketChannel clientChannel;
+    private final SocketChannel clientChannel;
     private Selector selector;
     private SelectionKey key;
     private SelectionKey previousKey;
-    private int isChannelOpen = 1;
+
 
     public ServerClientHandler(SocketChannel clientChannel) {
         this.clientChannel = clientChannel;
@@ -44,7 +58,6 @@ public class ServerClientHandler {
         this.previousKey = previousKey;
         this.nickList = nickList;
         UserMenager.setUserList(nickList);
-        displayUsersInformations();
         configureUser();
         choiceTypeOperation();
     }
@@ -54,7 +67,7 @@ public class ServerClientHandler {
         if (key.isWritable()) {
             ByteBuffer buffer = ByteBuffer.allocate(256);
 
-            buffer.put(("WITH_REPLY|"+messageToClient).getBytes());
+            buffer.put(("WITH_REPLY|"+messageToClient+"|").getBytes());
             buffer.flip();
 
             clientChannel.write(buffer);
@@ -68,7 +81,7 @@ public class ServerClientHandler {
         if (key.isWritable()) {
             ByteBuffer buffer = ByteBuffer.allocate(256);
 
-            buffer.put(("WITHOUT_REPLY|"+messageToClient).getBytes());
+            buffer.put(("WITHOUT_REPLY|"+messageToClient+"|").getBytes());
             buffer.flip();
 
             clientChannel.write(buffer);
@@ -106,6 +119,16 @@ public class ServerClientHandler {
         return UniwersalMenager.stringToInteger(firstResponse);
     }
 
+    private int onlyReceiveCorrectResponseRange(int minRange, int maxRange) throws IOException {
+        ByteBuffer buffer = ByteBuffer.allocate(256);
+        String firstResponse = receiveResponse();
+        while (!UniwersalMenager.checkStringIntRange(firstResponse, minRange, maxRange)) {
+            sendMessage("Niepoprawna wartosc, wybor: ");
+            firstResponse = receiveResponse();
+        }
+        return UniwersalMenager.stringToInteger(firstResponse);
+    }
+
     private int receiveCorrectResponseList(List<Integer> list) throws IOException {
         sendMessage("Wybor: " + list);
         String firstResponse = receiveResponse();
@@ -123,10 +146,14 @@ public class ServerClientHandler {
         }
     }
 
+    private void saveAllUsers() throws IOException {
+        User.saveUser(nickList, "userRecords.txt");
+    }
+
     public void choiceTypeOperation() throws IOException {
-        OperationMenager.displayOperations();
-        int choiceUser = receiveCorrectResponseRange(MIN_RANGE_TYPE_OPERATION, MAX_RANGE_TYPE_OPERATION);
-        System.out.println("Wybor operacji: "+choiceUser);
+        isChannelOpen = 1;
+        int choiceUser = sendOperationTypeChoice();
+        sendMessageWithoutResponse("Uzytkownik wybral operacje numer "+choiceUser);
         switch (choiceUser) {
             case 1:
                 doInvestorOperationIfPossible();
@@ -143,24 +170,19 @@ public class ServerClientHandler {
             default:
                 isChannelOpen = 0;
                 saveAllUsers();
-
+                break;
         }
     }
 
-    private void saveAllUsers() throws IOException {
-        User.saveUser(nickList, "userRecords.txt");
-    }
-
     public void investorOperationChoice() throws IOException {
-        OperationMenager.displayInvestorOperations();
+        sendInvestorOperationChoice();
         int userChoice;
         boolean isDone=true;
         int investorOperationChoice = receiveCorrectResponseRange(MIN_RANGE_INVESTOR_OPERATION, MAX_RANGE_INVESTOR_OPERATION);
-        System.out.println("Wybor inwestora operacji: "+investorOperationChoice);
         switch (investorOperationChoice) {
             case 1:
                 userChoice = receiveCorrectResponseList(InvestorMenager.returnIdsList());
-                OperationMenager.showInvestor(userChoice);
+                sendShowInvestor(userChoice);
                 operationRealization(isDone);
                 break;
             case 2:
@@ -184,15 +206,14 @@ public class ServerClientHandler {
     }
 
     public void sellerOperationChoice() throws IOException{
-        OperationMenager.displaySellerOperations();
+        sendSellerOperationChoice();
         int userChoice;
         boolean isDone=true;
         int sellerOperationChoice = receiveCorrectResponseRange(MIN_RANGE_SELLER_OPERATION, MAX_RANGE_SELLER_OPERATION);
-        System.out.println("Wybor sellera operacji: "+sellerOperationChoice);
         switch (sellerOperationChoice) {
             case 1:
                 userChoice = receiveCorrectResponseList(SellerMenager.returnIdsList());
-                OperationMenager.showSeller(userChoice);
+                sendShowSeller(userChoice);
                 operationRealization(isDone);
                 break;
             case 2:
@@ -215,10 +236,9 @@ public class ServerClientHandler {
     }
 
     public void buyOperationChoice() throws IOException{
-        OperationMenager.displayBuyOperations();
+        sendBuyOperationChoice();
         int buyOperationChoice = receiveCorrectResponseRange(MIN_RANGE_BUY_OPERATION, MAX_RANGE_BUY_OPERATION);
         boolean isDone = true;
-        System.out.println("Wybor buy operacji: "+buyOperationChoice);
         switch (buyOperationChoice) {
             case 1:
                 isDone = OperationMenager.buyInvestor();
@@ -250,16 +270,13 @@ public class ServerClientHandler {
     }
 
     public void otherOperationChoice() throws IOException{
-        OperationMenager.displayOtherOperations();
-        int timesChoice;
-        int goldChoice;
+        sendOtherOperationChoice();
         boolean isDone = true;
-        boolean isMachineUnlocked = true;
+        boolean isMachineUnlocked;
         int otherOperationChoice = receiveCorrectResponseRange(MIN_RANGE_OTHER_OPERATION, MAX_RANGE_OTHER_OPERATION);
-        System.out.println("Wybor other operacji: "+otherOperationChoice);
         switch (otherOperationChoice) {
             case 1:
-                OperationMenager.checkGold();
+                sendGoldAmount();
                 operationRealization(isDone);
                 break;
             case 2:
@@ -277,9 +294,94 @@ public class ServerClientHandler {
                 isDone = ifMachinePerformWorkInvestment(isMachineUnlocked);
                 operationRealization(isDone);
                 break;
+            case 5:
+                OperationMenager.clearUserList();
+                operationRealization(isDone);
+                break;
             default:
                 throw new RuntimeException("Incorrect number");
         }
+    }
+
+    public int sendOperationTypeChoice() throws IOException{
+        sendMessage(("\n"+user.getNick() + ", Operation:" +
+                "\n1. Investor" +
+                "\n2. Seller" +
+                "\n3. Buy" +
+                "\n4. Other" +
+                "\n5. Close connection"+
+                "\nWybor Uzytkownika: "));
+        return onlyReceiveCorrectResponseRange(MIN_RANGE_TYPE_OPERATION, MAX_RANGE_TYPE_OPERATION);
+    }
+
+    public void sendInvestorOperationChoice() throws IOException{
+        sendMessageWithoutResponse("Operation for investor:" +
+                "\n1. Display investor stats" +
+                "\n2. Invest gold " +
+                "\n3. Upgrade investor - cost - " + OperationInvestor.UPGRADE.getCost() +
+                "\n4. Sell investor - value - " + -1 * OperationInvestor.SELL.getCost());
+    }
+
+    public void sendSellerOperationChoice() throws IOException{
+        sendMessageWithoutResponse("Operation for seller:" +
+                "\n1. Display seller stats" +
+                "\n2. Earn gold" +
+                "\n3. Upgrade seller (basic cost - " + OperationSeller.UPGRADE.getCost() + ", rate" + values + ") - " +
+                "\n4. Sell seller (baisc value - " + -1 * SellerMenager.countSellValue(Optional.of(SellerBooks.class)) + ", rate" + values + ") - ");
+    }
+
+    public void sendBuyOperationChoice() throws IOException{
+        sendMessageWithoutResponse("Buy something:" +
+                "\n1. Buy investor - cost - " + InvestorMenager.countBuyCost() +
+                "\n2. Buy book seller - cost - " + SellerMenager.countBuyCost(SellerBooks.class) +
+                "\n3. Buy board games seller - cost - " + SellerMenager.countBuyCost(SellerBoardGames.class) +
+                "\n4. Buy computer games seller - cost - " + SellerMenager.countBuyCost(SellerComputerGames.class) +
+                "\n5. Buy house seller - cost - " + SellerMenager.countBuyCost(SellerHouses.class) +
+                "\n6. Buy Machine - cost - " + Machine.getMACHINE_COST());
+    }
+
+    public void sendOtherOperationChoice() throws IOException{
+        sendMessageWithoutResponse("Other operations:" +
+                "\n1. Check gold " +
+                "\n2. Perform job (cost - 100)" +
+                "\n3. Perform investment (cost - 300)" +
+                "\n4. Perform job and investment (cost - 500)"+
+                "\n5. Clear users list");
+    }
+
+    public void sendGoldAmount() throws IOException{
+        sendMessageWithoutResponse(user.getNick() + " - Gold: " + user.getGold());
+    }
+
+    public void sendShowInvestor(int idInv) throws IOException{
+        Investor thisInvestor = InvestorMenager.findInvestorById(idInv);
+        String stats = InvestorMenager.getStatisticsString(idInv);
+        String[] statsParts = stats.split("\\|");
+        sendMessageWithoutResponse("------------------INVESTOR----------------"+
+                "\nID - " + thisInvestor.getInvId() +
+                "\nRarity - " + thisInvestor.getRarity() +
+                "\nLevel - " + thisInvestor.getLevel()+
+                "\n"+statsParts[0]+
+                "\n"+statsParts[1]+
+                "\n"+statsParts[2]+
+                "\n"+statsParts[3]+
+                "\n----------------------------------------");
+    }
+
+    public void sendShowSeller(int idSel) throws IOException{
+        AbstractSeller thisSeller = SellerMenager.findSellerById(idSel).get();
+        String stats = SellerMenager.getSellerStats(idSel);
+        String[] statsParts = stats.split("\\|");
+        String sellerClass = SellerMenager.getSellerClass(thisSeller);
+        sendMessageWithoutResponse("------------------"+sellerClass+"----------------"+
+                "\nID - " + thisSeller.getSellerId() +
+                "\nRarity - " + thisSeller.getRarity() +
+                "\nLevel - " + thisSeller.getLevel()+
+                "\n"+statsParts[0]+
+                "\n"+statsParts[1]+
+                "\n"+statsParts[2]+
+                "\n"+statsParts[3]+
+                "\n----------------------------------------");
     }
 
     public void doInvestorOperationIfPossible() throws IOException {
@@ -352,16 +454,20 @@ public class ServerClientHandler {
             sendMessageWithoutResponse("Operacja nie zostala zrealizowana");
     }
 
-    private void displayUsersInformations(){
-        System.out.println("Ilosc uzytkownikow zarejestrowanych - "+nickList.size());
-        System.out.println("Nicki zarejestrowanych uzytkownikow:");
-        for (User user : nickList) {
-            System.out.println(user);
+    private void displayUsersInformations() throws IOException {
+        if(isChannelOpen!=1) {
+            String nickString="";
+            for (User user : nickList) {
+                nickString+="\n"+user;
+            }
+            sendMessageWithoutResponse("Ilosc uzytkownikow zarejestrowanych - " + nickList.size()+
+                    "\nNicki zarejestrowanych uzytkownikow:"+nickString);
         }
     }
 
     private void configureUser() throws IOException {
         if(ifNewUser()){
+            displayUsersInformations();
             String nick = getNick();
             if(ifNewNick(nick)) {
                 getNewUser(nick);
@@ -373,6 +479,7 @@ public class ServerClientHandler {
             getSameUser();
         }
         UserMenager.setUserEverywhere();
+        isChannelOpen=1;
     }
 
     public void getNewUser(String nick){
@@ -389,7 +496,7 @@ public class ServerClientHandler {
     }
 
     public String getNick() throws IOException{
-        sendMessage("Podaj nick uzytkownika: ");
+        sendMessage("\nPodaj nick uzytkownika: ");
         return receiveResponse();
     }
 

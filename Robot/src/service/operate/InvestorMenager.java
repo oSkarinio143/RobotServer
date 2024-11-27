@@ -43,6 +43,19 @@ public class InvestorMenager {
         });
     }
 
+    public static String getStatisticsString(int idInv){
+        Investor investor = findInvestorById(idInv);
+        Map<Integer, Integer> intMap = investor.getStatistics();
+        String statsView="";
+        for (Map.Entry<Integer, Integer> entry : intMap.entrySet()) {
+            Integer value = entry.getValue();
+            Integer key = entry.getKey();
+            String part = StatsInvestor.getById(key)+" - "+value+"|";
+            statsView+=part;
+        }
+        return statsView;
+    }
+
     public static void createInvestor(){
         int levelNumber = 1;
         Investor investor = generateBasicInvestor(levelNumber);
